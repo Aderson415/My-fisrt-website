@@ -1,0 +1,432 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的三年級暑假大冒險</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Soft Harmony -->
+    <!-- Application Structure Plan: The application is designed as an interactive "Summer Adventure Map". Instead of a linear diary, key events are presented as clickable icons on a central dashboard. This non-linear, thematic structure encourages exploration and makes discovering the memories more engaging. Clicking an icon reveals a detailed view of that event, including diary text and related visuals. This approach transforms a passive reading experience into an interactive journey, which is more suitable for a fun, personal topic like a summer diary. -->
+    <!-- Visualization & Content Choices: 
+        - Hokkaido Trip -> Goal: Explore travel. -> Method: Clickable icon revealing a modal with a gallery-like text layout. -> Interaction: Click to view details. -> Justification: Breaks down the trip into digestible parts. -> Library/Method: HTML/CSS/JS.
+        - Story MVP & DIY Bear -> Goal: Showcase creativity. -> Method: Icons leading to descriptive text sections, with a new LLM-powered button to generate a story ending. -> Interaction: Click to view, click a button to generate text. -> Justification: Focuses on the creative process and achievement, adding a new interactive, generative element. -> Library/Method: HTML/CSS/JS, Gemini API.
+        - Achievements (Go/Swim) -> Goal: Visualize progress and provide encouragement. -> Method: An interactive bar chart, with a new LLM-powered button for motivational text. -> Interaction: Hover for details, click a button to generate text. -> Justification: A chart provides a more impactful summary of skill growth, while the LLM offers personalized encouragement. -> Library/Method: Chart.js, Gemini API.
+        - Overall Feelings -> Goal: Summarize the emotional tone. -> Method: A donut chart. -> Interaction: Hover to see feelings. -> Justification: Gives a quick, high-level emotional overview of the summer. -> Library/Method: Chart.js.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        .content-card {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            opacity: 0;
+            transform: translateY(20px);
+            display: none;
+        }
+        .content-card.active {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+        .nav-item.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+        }
+        .llm-output {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-700">
+
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-bold text-violet-600">我的三年級暑假大冒險</h1>
+            <p class="mt-2 md:mt-4 text-slate-500">點擊下方的圖示，探索我精彩的暑假故事！</p>
+        </header>
+
+
+        <main>
+            <nav id="nav-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-8 md:mb-12">
+                <div data-section="hokkaido" class="nav-item bg-white p-4 rounded-xl shadow-md hover:shadow-lg cursor-pointer flex flex-col items-center justify-center aspect-square transition-transform duration-300">
+                    <span class="text-4xl mb-2">✈️</span>
+                    <span class="font-semibold text-center text-sm">北海道之旅</span>
+                </div>
+                <div data-section="story" class="nav-item bg-white p-4 rounded-xl shadow-md hover:shadow-lg cursor-pointer flex flex-col items-center justify-center aspect-square transition-transform duration-300">
+                    <span class="text-4xl mb-2">📖</span>
+                    <span class="font-semibold text-center text-sm">故事MVP養成營</span>
+                </div>
+                <div data-section="achievements" class="nav-item bg-white p-4 rounded-xl shadow-md hover:shadow-lg cursor-pointer flex flex-col items-center justify-center aspect-square transition-transform duration-300">
+                    <span class="text-4xl mb-2">🏆</span>
+                    <span class="font-semibold text-center text-sm">技能與成就</span>
+                </div>
+                <div data-section="diy" class="nav-item bg-white p-4 rounded-xl shadow-md hover:shadow-lg cursor-pointer flex flex-col items-center justify-center aspect-square transition-transform duration-300">
+                    <span class="text-4xl mb-2">🎨</span>
+                    <span class="font-semibold text-center text-sm">流體熊DIY</span>
+                </div>
+                <div data-section="summary" class="nav-item bg-white p-4 rounded-xl shadow-md hover:shadow-lg cursor-pointer flex flex-col items-center justify-center aspect-square transition-transform duration-300">
+                    <span class="text-4xl mb-2">💖</span>
+                    <span class="font-semibold text-center text-sm">夏日心情總結</span>
+                </div>
+            </nav>
+
+
+            <div id="content-container" class="bg-white/80 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg min-h-[400px]">
+                <div id="welcome-message" class="text-center flex flex-col justify-center items-center h-full">
+                    <span class="text-6xl mb-4">☀️</span>
+                    <h2 class="text-2xl font-bold text-slate-800">歡迎來到我的暑假回憶錄！</h2>
+                    <p class="mt-2 text-slate-600">從北國的雪景到圍棋的挑戰，我的夏天充滿了驚喜！</p>
+                </div>
+
+
+                <div id="hokkaido-content" class="content-card">
+                    <h2 class="text-2xl font-bold text-violet-600 mb-4">第一週：北海道的奇幻之旅</h2>
+                    <p class="mb-6 text-slate-600">我的第一次日本旅行！從飛機衝上雲霄的那一刻起，我就知道這會是一場難忘的冒險。北海道的風景和美食，都變成了我心中閃亮的星星。</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-rose-50 p-4 rounded-lg">
+                            <h3 class="font-bold mb-2">函館百萬夜景 (7/12)</h3>
+                            <p class="text-sm">晚上，我們搭纜車到函館山。整個城市像灑滿了鑽石一樣閃閃發光，好漂亮！我覺得自己好像是住在城堡裡的公主。我們還吃了超新鮮的海鮮丼飯，肚子都變圓滾滾的了。</p>
+                        </div>
+                        <div class="bg-sky-50 p-4 rounded-lg">
+                            <h3 class="font-bold mb-2">札幌與小樽 (7/14)</h3>
+                            <p class="text-sm">在小樽運河邊散步，感覺好像走進了故事書裡。我還吃了薰衣草口味的冰淇淋，香香甜甜的，心情也跟著飛揚起來！</p>
+                        </div>
+                        <div class="bg-amber-50 p-4 rounded-lg md:col-span-2">
+                            <h3 class="font-bold mb-2">白色戀人公園 (7/16)</h3>
+                            <p class="text-sm">這裡就像一個夢幻的餅乾城堡！我親手做了有自己畫的圖案的餅乾，聞起來甜甜的，吃起來更是充滿了幸福的味道。</p>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="story-content" class="content-card">
+                    <h2 class="text-2xl font-bold text-rose-500 mb-4">第二週：我是說故事MVP！</h2>
+                    <p class="mb-6 text-slate-600">媽媽說，每個故事都是一個小小的世界。在這個星期，我學會了用聲音和表情來創造屬於我的世界，並把快樂分享給爸爸媽媽聽。</p>
+                    <div class="bg-rose-50 p-6 rounded-lg text-center">
+                        <h3 class="font-bold text-lg mb-2">成果發表會 (7/24)</h3>
+                        <p class="text-sm">我挑了一本最喜歡的繪本，在爸爸媽媽面前有模有樣地講著。看到他們開心的笑容和用力的拍手，我覺得自己好棒！媽媽還頒給我一個「故事MVP」的稱號，這是我最驕傲的勳章！</p>
+                    </div>
+                    <button id="generate-story-ending-btn" class="mt-4 w-full bg-violet-500 text-white font-bold py-2 px-4 rounded-full shadow-lg hover:bg-violet-600 transition-colors">
+                        ✨ 為我的故事寫一個結尾
+                    </button>
+                    <div id="story-output" class="mt-4 p-4 bg-violet-100 rounded-lg hidden">
+                        <p id="story-output-text" class="text-violet-800 text-sm italic"></p>
+                    </div>
+                    <div id="story-loading" class="mt-4 text-center text-violet-500 hidden">
+                        生成中...請稍候
+                    </div>
+                </div>
+
+
+                <div id="achievements-content" class="content-card">
+                    <h2 class="text-2xl font-bold text-emerald-600 mb-4">第三週：技能與成就解鎖</h2>
+                    <p class="mb-6 text-slate-600">這個夏天，我不只玩得很開心，也學會了新東西！從水中探索到棋盤上的思考，每一步都是成長的印記。</p>
+                    <div class="chart-container">
+                        <canvas id="achievementsChart"></canvas>
+                    </div>
+                    <button id="generate-encouragement-btn" class="mt-4 w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-full shadow-lg hover:bg-emerald-600 transition-colors">
+                        ✨ 獲得鼓勵的話語
+                    </button>
+                    <div id="encouragement-output" class="mt-4 p-4 bg-emerald-100 rounded-lg hidden">
+                        <p id="encouragement-output-text" class="text-emerald-800 text-sm italic"></p>
+                    </div>
+                    <div id="encouragement-loading" class="mt-4 text-center text-emerald-500 hidden">
+                        生成中...請稍候
+                    </div>
+                </div>
+
+
+                <div id="diy-content" class="content-card">
+                     <h2 class="text-2xl font-bold text-sky-500 mb-4">第四週：流體熊的創作時光</h2>
+                     <p class="mb-6 text-slate-600">在學校的課輔營，我體驗了最好玩的流體熊DIY！看著顏料自由流動，混合出意想不到的圖案，感覺好療癒。這不只是一隻熊，更是我獨一無二的藝術品。</p>
+                     <div class="bg-sky-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-lg mb-2 text-center">我的專屬星空熊 (8/8)</h3>
+                        <p class="text-sm">我選了最喜歡的粉紅色、藍色和紫色，把它們混合在一起，就像夢幻的星空。當顏料慢慢流滿熊熊的身體，我覺得自己像個小小的魔法師。這隻熊現在就放在我的書桌上，提醒我這個夏天有多麼充實有趣！</p>
+                    </div>
+                </div>
+                
+                <div id="summary-content" class="content-card">
+                    <h2 class="text-2xl font-bold text-pink-500 mb-4">夏日心情總結</h2>
+                    <p class="mb-6 text-slate-600">這個暑假充滿了各種情緒，有旅行的興奮、學習的緊張，還有完成目標的驕傲。每種心情都像是調色盤上的顏料，把我的夏天點綴得多采多姿。</p>
+                     <div class="chart-container">
+                        <canvas id="feelingsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <script>
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentCards = document.querySelectorAll('.content-card');
+        const welcomeMessage = document.getElementById('welcome-message');
+        let achievementsChartInstance = null;
+        let feelingsChartInstance = null;
+
+
+        const diaryData = {
+            achievements: {
+                labels: ['游泳技能', '圍棋棋力'],
+                data: [50, 85],
+                details: [
+                    '游泳初體驗 (7/28): 一開始有點怕水，但教練鼓勵我，我學會了踢水，感覺自己像條小魚！',
+                    '圍棋G17檢定通過 (8/3): 考試時心跳好快！當老師宣布我通過時，我開心得跳起來！這是最棒的禮物！'
+                ]
+            },
+            feelings: {
+                labels: ['興奮', '開心', '驕傲', '緊張'],
+                data: [40, 35, 20, 5]
+            }
+        };
+
+
+        const generateStoryEndingBtn = document.getElementById('generate-story-ending-btn');
+        const generateEncouragementBtn = document.getElementById('generate-encouragement-btn');
+        const storyOutput = document.getElementById('story-output');
+        const storyOutputText = document.getElementById('story-output-text');
+        const storyLoading = document.getElementById('story-loading');
+        const encouragementOutput = document.getElementById('encouragement-output');
+        const encouragementOutputText = document.getElementById('encouragement-output-text');
+        const encouragementLoading = document.getElementById('encouragement-loading');
+
+
+        function showContent(sectionId) {
+            welcomeMessage.style.display = 'none';
+            contentCards.forEach(card => {
+                card.classList.remove('active');
+                card.style.display = 'none';
+            });
+            const currentCard = document.getElementById(sectionId + '-content');
+            if (currentCard) {
+                currentCard.classList.add('active');
+                currentCard.style.display = 'block';
+            }
+
+
+            storyOutput.classList.add('hidden');
+            encouragementOutput.classList.add('hidden');
+
+
+            navItems.forEach(item => {
+                if (item.dataset.section === sectionId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+
+            if (sectionId === 'achievements') {
+                renderAchievementsChart();
+            }
+            if (sectionId === 'summary') {
+                renderFeelingsChart();
+            }
+        }
+
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const sectionId = item.dataset.section;
+                showContent(sectionId);
+            });
+        });
+
+
+        async function callGeminiApi(prompt) {
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            let result = null;
+            let retries = 0;
+            const maxRetries = 5;
+            let delay = 1000;
+
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.status === 429) {
+                        throw new Error('Quota exceeded, retrying...');
+                    }
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+                    result = await response.json();
+                    break;
+                } catch (error) {
+                    retries++;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+
+
+            if (!result) {
+                throw new Error("Failed to get a response from the API after multiple retries.");
+            }
+
+
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error("Unexpected API response format or no content.");
+            }
+        }
+
+
+        generateStoryEndingBtn.addEventListener('click', async () => {
+            storyOutput.classList.add('hidden');
+            storyLoading.classList.remove('hidden');
+            const prompt = `為一個小學三年級女生的暑假故事寫一個充滿想像力的結尾。故事的主角剛參加完一個說故事營，學會了用聲音和表情讓故事更生動。請根據這個主題，寫一個簡短、充滿童趣的結尾，大約50字。`;
+            try {
+                const text = await callGeminiApi(prompt);
+                storyOutputText.textContent = text;
+                storyOutput.classList.remove('hidden');
+            } catch (error) {
+                storyOutputText.textContent = '生成失敗，請稍後再試。';
+                storyOutput.classList.remove('hidden');
+            } finally {
+                storyLoading.classList.add('hidden');
+            }
+        });
+
+
+        generateEncouragementBtn.addEventListener('click', async () => {
+            encouragementOutput.classList.add('hidden');
+            encouragementLoading.classList.remove('hidden');
+            const prompt = `寫一句簡短、充滿溫暖的鼓勵話語，送給一位剛通過圍棋檢定和學會游泳的小學三年級女生。話語要充滿鼓勵和讚美，讓她知道堅持努力的價值。大約30字。`;
+            try {
+                const text = await callGeminiApi(prompt);
+                encouragementOutputText.textContent = text;
+                encouragementOutput.classList.remove('hidden');
+            } catch (error) {
+                encouragementOutputText.textContent = '生成失敗，請稍後再試。';
+                encouragementOutput.classList.remove('hidden');
+            } finally {
+                encouragementLoading.classList.add('hidden');
+            }
+        });
+
+
+        function renderAchievementsChart() {
+            const ctx = document.getElementById('achievementsChart').getContext('2d');
+            if (achievementsChartInstance) {
+                achievementsChartInstance.destroy();
+            }
+            achievementsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: diaryData.achievements.labels,
+                    datasets: [{
+                        label: '暑假成就進度 (%)',
+                        data: diaryData.achievements.data,
+                        backgroundColor: [
+                            'rgba(56, 189, 248, 0.6)',
+                            'rgba(16, 185, 129, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(56, 189, 248, 1)',
+                            'rgba(16, 185, 129, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(context) {
+                                    return diaryData.achievements.details[context[0].dataIndex];
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function renderFeelingsChart() {
+            const ctx = document.getElementById('feelingsChart').getContext('2d');
+             if (feelingsChartInstance) {
+                feelingsChartInstance.destroy();
+            }
+            feelingsChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: diaryData.feelings.labels,
+                    datasets: [{
+                        label: '夏日心情分佈',
+                        data: diaryData.feelings.data,
+                        backgroundColor: [
+                            'rgba(244, 114, 182, 0.7)',
+                            'rgba(251, 191, 36, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(96, 165, 250, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(244, 114, 182, 1)',
+                            'rgba(251, 191, 36, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(96, 165, 250, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+
+</body>
+</html>
